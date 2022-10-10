@@ -3,8 +3,7 @@
 #include <boost/graph/biconnected_components.hpp>
 
 struct edge_component_t {
-  enum { cnum = 555 };
-  typedef boost::edge_property_tag kind;
+  using kind = boost::edge_property_tag;
 } edge_component;
 
 using component = boost::property<edge_component_t, int>;
