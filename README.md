@@ -17,3 +17,7 @@
 | [Buddy Selection](statements/week03/buddy_selection.pdf)           | [buddy_selection.cc](src/week03/buddy_selection.cc)           | 100   | Week 3        | --     |
 | [Important Bridges](statements/week03/important_bridges.pdf)       | [important_bridges.cc](src/week03/important_bridges.cc)       | 100   | Week 3        | --     |
 | [Greyjoy](statements/week04/greyjoy.pdf)                           | [greyjoy.cc](src/week04/greyjoy.cc)                           | 100   | Week 4 (PotW) | --     |
+| [Antenna](statements/week04/antenna.pdf)                           | [antenna.cc](src/week04/antenna.cc)                           | 100   | Week 4        | --     |
+| [Hit](statements/week04/hit.pdf)                                   | [hit.cc](src/week04/hit.cc)                                   | 100   | Week 4        | --     |
+| [Hiking Maps](statements/week04/antenna.pdf)                       | [hiking_maps.cc](src/week04/hiking_maps.cc)                   | 100   | Week 4        | --     |
+| [First Hit](statements/week04/first_hit.pdf)                       | [first_hit.cc](src/week04/first_hit.cc)                       | 100   | Week 4        | --     |
