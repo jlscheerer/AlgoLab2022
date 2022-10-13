@@ -1,4 +1,3 @@
-/// 2
 #include <bits/stdc++.h>
 #define ll long long
 
@@ -100,13 +99,6 @@ int main() {
         cin >> rs.back()[j];
     }
     unordered_map<ll, tuple<int, int, int>> m = build_prefix(c, rs);
-#if 0
-    for (const auto &p: m) {
-      int a, b, c;
-      tie(a, b, c) = p.second;
-      cout << p.first << ": " << a << " " << b << " " << c << endl;
-    }
-#endif
     int ans = 0;
     for (int ri = 0; ri < w; ++ri) {
       ans = max(ans, solve_waterway(c, rs[ri], ri, m, k));
