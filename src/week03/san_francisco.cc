@@ -2,50 +2,52 @@
 
 using namespace std;
 
+using ll = long long;
+using edge = tuple<int, int, long long>;
+
 int main() {
-  using edge = tuple<int, int, long long>;
   ios_base::sync_with_stdio(false);
   int t;
   cin >> t;
   while (t--) {
-    int n, m;
-    long long x, k;
+    int n, m, u, v;
+    ll x, k, p;
     cin >> n >> m >> x >> k;
-    vector<int> outgoing(n);
-    vector<edge> adj;
+    vector<int> out(n); // out[v]: number of outgoing edges for node v
+    vector<edge> adj;   // adjacency list representing the input graph.
     adj.reserve(m);
     for (int i = 0; i < m; ++i) {
-      int u, v;
-      long long p;
       cin >> u >> v >> p;
-      ++outgoing[u];
-      // TODO we only care about the maximum
+      ++out[u];
       adj.emplace_back(u, v, p);
     }
-    vector<long long> max_d(n, -1), update(n, -1);
-    max_d[0] = 0;
-    long long ans = -1;
+    vector<ll> dist_prev(n, -1); // dist[i - 1]
+    vector<ll> dist_cur(n, -1);  // dist[i]
+    dist_prev[0] = 0;            // initialize the source distance
+    ll ans = -1;
     for (int move = 1; move <= k; ++move) {
-      long long max_score = 0;
+      ll max_score = 0;
       for (const auto &edge : adj) {
-        int u = get<0>(edge), v = get<1>(edge);
-        long long p = get<2>(edge);
-        if (outgoing[v] == 0)
+        tie(u, v, p) = edge;
+        // treat (u, v) with out[v] = 0 as (u, s)
+        if (out[v] == 0)
           v = 0;
-        if (max_d[u] == -1)
-          continue; // we did not reach this node before.
-        update[v] = max(max_d[v], max(update[v], max_d[u] + p));
-        max_score = max(max_score, update[v]);
+        // we did not reach this node before (i.e., dist[i - 1] = -∞)
+        if (dist_prev[u] == -1)
+          continue;
+        // dist[i][v] = max {dist[i - 1][u] + w(u, v) | (u, v) ∈ E}
+        dist_cur[v] = max(dist_prev[v], max(dist_cur[v], dist_prev[u] + p));
+        max_score = max(max_score, dist_cur[v]);
       }
       if (max_score >= x) {
         ans = move;
         break;
       }
-      swap(max_d, update);
+      swap(dist_prev, dist_cur);
     }
-    if (ans == -1)
-      cout << "Impossible\n";
+    if (ans != -1)
+      cout << ans << "\n"; // we found a distance >= x in <= k moves.
     else
-      cout << ans << "\n";
+      cout << "Impossible\n"; // we did not find such a distance => impossible.
   }
 }
