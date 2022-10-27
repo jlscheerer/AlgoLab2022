@@ -26,4 +26,8 @@
 | [Moving Books](statements/week05/moving_books.pdf)                 | [moving_books.cc](src/week05/moving_books.cc)                 | 100              | Week 5        | --     |
 | [Severus Snape](statements/week05/severus_snape.pdf)               | [severus_snape.cc](src/week05/severus_snape.cc)               | 100              | Week 5        | --     |
 | [Asterix the Gaul](statements/week05/asterix_the_gaul.pdf)         | [asterix_the_gaul.cc](src/week05/asterix_the_gaul.cc)         | 100              | Week 5        | --     |
-| [Motorcycles](statements/week05/asterix_the_gaul.pdf)              | [motorcycles.cc](src/week06/motorcycles.cc)                   | 80 (Preliminary) | Week 6 (PotW) | --     |
+| [Motorcycles](statements/week06/motorcycles.pdf)                   | [motorcycles.cc](src/week06/motorcycles.cc)                   | 80 (Preliminary) | Week 6 (PotW) | --     |
+| [What is the Maximum?](statements/week06/what_is_the_maximum.pdf)  | [what_is_the_maximum.cc](src/week06/what_is_the_maximum.cc)   | 100              | Week 6        | --     |
+| [Diet](statements/week06/diet.pdf)                                 | [diet.cc](src/week06/diet.cc)                                 | 100              | Week 6        | --     |
+| [Inball](statements/week06/inball.pdf)                             | [inball.cc](src/week06/inball.cc)                             | 100              | Week 6        | --     |
+| [Suez](statements/week06/suez.pdf)                                 | [suez.cc](src/week06/suez.cc)                                 | 100              | Week 6        | --     |
