@@ -2,67 +2,47 @@
 
 using namespace std;
 
-using boat = pair<int, int>;
-using indexed_boat = tuple<int, int, int>;
+struct Interval {
+  int begin, end;
+  int length() const { return end - begin; }
+};
 
-int boat_bound(const vector<boat> &boats, const indexed_boat &index) {
-  int i = get<2>(index);
-  return boats[i].second - boats[i].first;
-}
+struct Boat {
+  int length, position;
+  bool operator<(const Boat &other) {
+    return (position < other.position) ||
+           (position == other.position && length < other.length);
+  }
+  int starting_position() const { return position - length; }
+};
 
 int main() {
+  ios_base::sync_with_stdio(false);
   int t;
   cin >> t;
   while (t--) {
     int n, l, p;
     cin >> n;
-    vector<boat> boats;
-    boats.reserve(n);
+    vector<Boat> boats;
     for (int i = 0; i < n; ++i) {
       cin >> l >> p;
-      boats.emplace_back(l, p);
+      boats.push_back({/*length=*/l, /*position=*/p});
     }
-    // take the larger boat in case of ties!
-    priority_queue<indexed_boat, vector<indexed_boat>, greater<>> gt, le;
-    for (int i = 0; i < n; ++i) {
-      gt.push({boats[i].second, -boats[i].first, i});
-    }
-    int ans = 0, bound = INT_MIN;
-    while (gt.size() || le.size()) {
-      // reshuffle (move from p - l > bound to bound >= p -l)
-      while (gt.size() && bound >= boat_bound(boats, gt.top())) {
-        auto move = gt.top();
-        gt.pop();
-        const int i = get<2>(move);
-        le.push({boats[i].first, -boats[i].first, i});
+    sort(boats.begin(), boats.end()); // sort by (position, length)
+    int ans = 1;
+    Interval prev = {-1, -1}, curr = {/*begin=*/-1, /*end=*/boats[0].position};
+    for (int i = 1; i < (int)boats.size(); ++i) {
+      if (curr.end < boats[i].position) {
+        // it does not hurt to take `curr` (remaining boats will fit)
+        prev = curr, ++ans;
+        curr.begin = max(prev.end, boats[i].starting_position());
+        curr.end = curr.begin + boats[i].length;
+      } else if (boats[i].length < curr.length()) {
+        // we found a boat that fits (instead of curr) & ends earlier!
+        curr.begin = max(prev.end, boats[i].starting_position());
+        curr.end = curr.begin + boats[i].length;
       }
-      indexed_boat candidate;
-      if (!gt.size()) {
-        candidate = le.top();
-        le.pop();
-      } else if (!le.size()) {
-        candidate = gt.top();
-        gt.pop();
-      } else {
-        int le_cand = get<2>(le.top());
-        int gt_cand = get<2>(gt.top());
-        if (bound + boats[le_cand].first < boats[gt_cand].second ||
-            (bound + boats[le_cand].first == boats[gt_cand].second &&
-             boats[le_cand].first > boats[gt_cand].first)) {
-          candidate = le.top();
-          le.pop();
-        } else {
-          candidate = gt.top();
-          gt.pop();
-        }
-      }
-      int id = get<2>(candidate);
-      tie(l, p) = boats[id];
-      if (bound > p)
-        continue;
-      ++ans;
-      bound = max(bound, p - l) + l;
     }
-    cout << ans << "\n";
+    cout << ans << '\n';
   }
 }
