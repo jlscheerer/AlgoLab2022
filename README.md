@@ -31,3 +31,4 @@
 | [Diet](statements/week06/diet.pdf)                                 | [diet.cc](src/week06/diet.cc)                                 | 100              | Week 6        | --     |
 | [Inball](statements/week06/inball.pdf)                             | [inball.cc](src/week06/inball.cc)                             | 100              | Week 6        | --     |
 | [Suez](statements/week06/suez.pdf)                                 | [suez.cc](src/week06/suez.cc)                                 | 100              | Week 6        | --     |
+| [Octopussy](statements/week07/octopussy.pdf)                       | [motorcycles.cc](src/week07/octopussy.cc)                     | 80 (Preliminary) | Week 7 (PotW) | --     |
