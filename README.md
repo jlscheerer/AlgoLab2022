@@ -36,3 +36,4 @@
 | [Shopping Trip](statements/week07/shopping_trip.pdf)                     | [shopping_trip.cc](src/week07/shopping_trip.cc)                     | 100              | Week 7        | --     |
 | [London](statements/week07/london.pdf)                                   | [london.cc](src/week07/london.cc)                                   | 100              | Week 7        | --     |
 | [Tiles](statements/week07/tiles.pdf)                                     | [tiles.cc](src/week07/tiles.cc)                                     | 100              | Week 7        | --     |
+| [Augean Stables](statements/week08/augean_stables.pdf)                   | [augean_stables.cc](src/week08/augean_stables.cc)                   | 100              | Week 8 (PotW) | --     |
