@@ -67,6 +67,7 @@ int main() {
     // binary search the number hours
     int left = 0, right = 2 * bound, ans = -1;
 
+    // for each ai store the max pi that failed so far.
     unordered_map<int, int> cache_a;
 
     while (left <= right) {
