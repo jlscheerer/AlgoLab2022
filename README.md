@@ -41,3 +41,4 @@
 | [H1N1](statements/week08/H1N1.pdf)                                       | [H1N1.cc](src/week08/H1N1.cc)                                       | 0                | Week 8        | --     |
 | [Light the Stage](statements/week08/light_the_stage.pdf)                 | [light_the_stage.cc](src/week08/light_the_stage.cc)                 | 100              | Week 8        | --     |
 | [Germs](statements/week08/germs.pdf)                                     | [germs.cc](src/week08/germs.cc)                                     | 100              | Week 8        | --     |
+| [Knights](statements/week09/knights.pdf)                                 | [knights.cc](src/week09/knights.cc)                                 | 80 (Preliminary) | Week 9 (PotW) | --     |
