@@ -42,3 +42,7 @@
 | [Light the Stage](statements/week08/light_the_stage.pdf)                 | [light_the_stage.cc](src/week08/light_the_stage.cc)                 | 100              | Week 8        | --     |
 | [Germs](statements/week08/germs.pdf)                                     | [germs.cc](src/week08/germs.cc)                                     | 100              | Week 8        | --     |
 | [Knights](statements/week09/knights.pdf)                                 | [knights.cc](src/week09/knights.cc)                                 | 80 (Preliminary) | Week 9 (PotW) | --     |
+| [Algocoon](statements/week09/algocoon.pdf)                               | [algocoon.cc](src/week09/algocoon.cc)                               | 100              | Week 9        | --     |
+| [Placing Knights](statements/week09/placing_knights.pdf)                 | [placing_knights.cc](src/week09/placing_knights.cc)                 | 100              | Week 9        | --     |
+| [Real Estate Market](statements/week09/real_estate_market.pdf)           | [algocoon.cc](src/week09/real_estate_market.cc)                     | 100              | Week 9        | --     |
+| [Casino Royale](statements/week09/casino_royale.pdf)                     | [casino_royale.cc](src/week09/casino_royale.cc)                     | 0                | Week 9        | --     |
