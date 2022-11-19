@@ -38,7 +38,7 @@
 | [Tiles](statements/week07/tiles.pdf)                                     | [tiles.cc](src/week07/tiles.cc)                                     | 100              | Week 7        | --     |
 | [Augean Stables](statements/week08/augean_stables.pdf)                   | [augean_stables.cc](src/week08/augean_stables.cc)                   | 100              | Week 8 (PotW) | --     |
 | [Bistro](statements/week08/bistro.pdf)                                   | [bistro.cc](src/week08/bistro.cc)                                   | 100              | Week 8        | --     |
-| [H1N1](statements/week08/H1N1.pdf)                                       | [H1N1.cc](src/week08/H1N1.cc)                                       | 0                | Week 8        | --     |
+| [H1N1](statements/week08/H1N1.pdf)                                       | [H1N1.cc](src/week08/H1N1.cc)                                       | 100              | Week 8        | --     |
 | [Light the Stage](statements/week08/light_the_stage.pdf)                 | [light_the_stage.cc](src/week08/light_the_stage.cc)                 | 100              | Week 8        | --     |
 | [Germs](statements/week08/germs.pdf)                                     | [germs.cc](src/week08/germs.cc)                                     | 100              | Week 8        | --     |
 | [Knights](statements/week09/knights.pdf)                                 | [knights.cc](src/week09/knights.cc)                                 | 80 (Preliminary) | Week 9 (PotW) | --     |
