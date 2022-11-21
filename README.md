@@ -46,3 +46,4 @@
 | [Placing Knights](statements/week09/placing_knights.pdf)                 | [placing_knights.cc](src/week09/placing_knights.cc)                 | 100              | Week 9        | --     |
 | [Real Estate Market](statements/week09/real_estate_market.pdf)           | [real_estate_market.cc](src/week09/real_estate_market.cc)           | 100              | Week 9        | --     |
 | [Casino Royale](statements/week09/casino_royale.pdf)                     | [casino_royale.cc](src/week09/casino_royale.cc)                     | 100              | Week 9        | --     |
+| [The Hand's Tourney](statements/week10/hand.pdf)                         | [hand.cc](src/week10/hand.cc)                                       | 100              | Week 10       | --     |

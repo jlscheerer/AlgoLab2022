@@ -95,7 +95,7 @@ int main() {
       auto face = t.locate(point);
       int face_id = id_face(face);
       long required_distance = dp[face_id];
-      if (required_distance < 4 * d) {
+      if (required_distance < 4 * d) { // (2 * d)^2 = 4d^2
         cout << 'n';
       } else {
         cout << 'y';
