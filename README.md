@@ -51,3 +51,4 @@
 | [DHL](statements/week10/dhl.pdf)                                         | [dhl.cc](src/week10/dhl.cc)                                         | 99               | Week 10        | --     |
 | [New York](statements/week10/new_york.pdf)                               | [new_york.cc](src/week10/new_york.cc)                               | 100              | Week 10        | --     |
 | [Fleetrace](statements/week10/fleetrace.pdf)                             | [fleetrace.cc](src/week10/fleetrace.cc)                             | 100              | Week 10        | --     |
+| [Extra Exercise: New Tiles](statements/week10/new_tiles.pdf)             | [new_tiles.cc](src/week10/new_tiles.cc)                             | 50               | Week 10        | --     |

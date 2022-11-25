@@ -23,7 +23,6 @@ class edge_adder {
 
 public:
   explicit edge_adder(graph &G) : G(G) {}
-
   void add_edge(int from, int to, long capacity) {
     auto c_map = boost::get(boost::edge_capacity, G);
     auto r_map = boost::get(boost::edge_reverse, G);
@@ -44,8 +43,8 @@ int main() {
   while (t--) {
     int n, m;
     cin >> n >> m;
-    graph G(n), G_rev(n);
-    edge_adder edges(G), edges_rev(G_rev);
+    graph G(n);
+    edge_adder edges(G);
     unordered_map<int, unordered_map<int, long>> edge_map;
     for (int i = 0; i < m; ++i) {
       int a, b, c;
@@ -58,7 +57,6 @@ int main() {
         int target = target_cost.first;
         long cost = target_cost.second;
         edges.add_edge(source, target, cost);
-        edges_rev.add_edge(target, source, cost);
       }
     }
     const int source = 0; // fix any vertex.
@@ -66,10 +64,11 @@ int main() {
     for (int end = 0; end < n; ++end) {
       if (end == source)
         continue;
-      // we must either take source, or not.
-      long flow = boost::push_relabel_max_flow(G, source, end);
-      long rev_flow = boost::push_relabel_max_flow(G_rev, source, end);
-      ans = min(ans, min(flow, rev_flow));
+      // either we take the fixed vertex
+      long we_take = boost::push_relabel_max_flow(G, source, end);
+      // .. or they take the fixed vertex
+      long they_take = boost::push_relabel_max_flow(G, end, source);
+      ans = min(ans, min(we_take, they_take));
     }
     cout << ans << endl;
   }
