@@ -52,3 +52,4 @@
 | [New York](statements/week10/new_york.pdf)                               | [new_york.cc](src/week10/new_york.cc)                               | 100              | Week 10        | --     |
 | [Fleetrace](statements/week10/fleetrace.pdf)                             | [fleetrace.cc](src/week10/fleetrace.cc)                             | 100              | Week 10        | --     |
 | [Extra Exercise: New Tiles](statements/week10/new_tiles.pdf)             | [new_tiles.cc](src/week10/new_tiles.cc)                             | 50               | Week 10        | --     |
+| [Ceryneian Hind](statements/week11/ceryneian_hind.pdf)                   | [ceryneian_hind.cc](src/week11/ceryneian_hind.cc)                   | 80 (Preliminary  | Week 11 (PotW) | --     |
