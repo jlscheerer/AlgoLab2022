@@ -57,3 +57,4 @@
 | [The Fighting Pits of Meereen](statements/week11/the_fighting_pits_of_meereen.pdf) | [the_fighting_pits_of_meereen.cc](src/week11/the_fighting_pits_of_meereen.cc) | 100              | Week 11        | --     |
 | [Sith](statements/week11/sith.pdf)                                                 | [sith.cc](src/week11/sith.cc)                                                 | 100              | Week 11        | --     |
 | [Worldcup](statements/week11/worldcup.pdf)                                         | [worldcup.cc](src/week11/worldcup.cc)                                         | 100              | Week 11        | --     |
+| [Rubeus Hagrid](statements/week12/rubeus_hagrid.pdf)                               | [rubeus_hagrid.cc](src/week12/rubeus_hagrid.cc)                               | 80 (Preliminary) | Week 11        | --     |
