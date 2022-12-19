@@ -62,3 +62,7 @@
 | [On Her Majesty's Secret Service](statements/week12/majestys_service.pdf)          | [majestys_service.cc](src/week12/majestys_service.cc)                         | 100              | Week 12        | --     |
 | [Car Sharing](statements/week12/car_sharing.pdf)                                   | [car_sharing.cc](src/week12/car_sharing.cc)                                   | 80               | Week 12        | --     |
 | [Nemean Lion](statements/week12/nemean_lion.pdf)                                   | [nemean_lion.cc](src/week12/nemean_lion.cc)                                   | 60               | Week 12        | --     |
+| [Marathon](statements/week13/marathon.pdf)                                         | [marathon.cc](src/week13/marathon.cc)                                         | 100              | Week 13        | --     |
+| [Asterix and the Chariot Race](statements/week13/asterix.pdf)                      | [asterix.cc](src/week13/asterix.cc)                                           | 100              | Week 13        | --     |
+| [Evolution](statements/week13/evolution.pdf)                                       | [evolution.cc](src/week13/evolution.cc)                                       | 100              | Week 13        | --     |
+| [Idéfix](statements/week13/idefix.pdf)                                             | [idefix.cc](src/week13/idefix.cc)                                             | 100              | Week 13        | --     |
