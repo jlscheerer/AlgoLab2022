@@ -58,3 +58,7 @@
 | [Sith](statements/week11/sith.pdf)                                                 | [sith.cc](src/week11/sith.cc)                                                 | 100              | Week 11        | --     |
 | [Worldcup](statements/week11/worldcup.pdf)                                         | [worldcup.cc](src/week11/worldcup.cc)                                         | 100              | Week 11        | --     |
 | [Rubeus Hagrid](statements/week12/rubeus_hagrid.pdf)                               | [rubeus_hagrid.cc](src/week12/rubeus_hagrid.cc)                               | 80 (Preliminary) | Week 12 (PotW) | --     |
+| [Lord Voldemort](statements/week12/lord_voldemort.pdf)                             | [lord_voldemort.cc](src/week12/lord_voldemort.cc)                             | 100              | Week 12        | --     |
+| [On Her Majesty's Secret Service](statements/week12/majestys_service.pdf)          | [majestys_service.cc](src/week12/majestys_service.cc)                         | 100              | Week 12        | --     |
+| [Car Sharing](statements/week12/car_sharing.pdf)                                   | [car_sharing.cc](src/week12/car_sharing.cc)                                   | 80               | Week 12        | --     |
+| [Nemean Lion](statements/week12/nemean_lion.pdf)                                   | [nemean_lion.cc](src/week12/nemean_lion.cc)                                   | 60               | Week 12        | --     |
