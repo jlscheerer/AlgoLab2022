@@ -67,3 +67,4 @@
 | [Asterix and the Chariot Race](statements/week13/asterix.pdf)                      | [asterix.cc](src/week13/asterix.cc)                                           | 100              | Week 13        | --     |
 | [Evolution](statements/week13/evolution.pdf)                                       | [evolution.cc](src/week13/evolution.cc)                                       | 100              | Week 13        | --     |
 | [Idéfix](statements/week13/idefix.pdf)                                             | [idefix.cc](src/week13/idefix.cc)                                             | 100              | Week 13        | --     |
+| [Ludo Bagman](statements/week14/ludo_bagman.pdf)                                   | [ludo_bagman.cc](src/week14/ludo_bagman.cc)                                   | 100              | Week 14 (PotW) | --     |
