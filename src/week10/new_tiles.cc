@@ -2,65 +2,57 @@
 
 using namespace std;
 
-bool can_place_mask(int row, int mask) {
-  // for every 1 in mask we must have a 1 in row
-  return ((~row) & mask) == 0;
-}
-
-bool is_valid_domino_mask(const int w, int mask) {
-  // we must have even number of consecutive ones
-  if (__builtin_popcount(mask) % 2 != 0)
-    return false;
-  int count = 0;
-  for (int i = 0; i < w; ++i) {
-    if (mask & (1 << i))
-      ++count;
-    else if (count % 2 != 0)
-      return false;
-    else
-      count = 0;
-  }
-  return count % 2 == 0;
-}
-
-bool domino_compatible(int prev, int curr) {
-  // prev needs zero everywhere curr has a one
-  return ((~prev) & curr) == curr;
-}
-
-int solve(const int h, const int w, vector<int> &grid) {
-  vector<vector<int>> dp(h, vector<int>(2 << w, INT_MIN));
-  for (int bitmask = 0; bitmask < 2 << w; ++bitmask) {
-    dp[0][bitmask] = 0;
-  }
-  for (int i = 1; i < h; ++i) {
-    for (int bitmask = 0; bitmask < 2 << w; ++bitmask) {
-      if (!can_place_mask(grid[i], bitmask))
-        continue;
-      if (!can_place_mask(grid[i - 1], bitmask))
-        continue;
-      if (!is_valid_domino_mask(w, bitmask))
-        continue;
-
-      for (int prev_mask = 0; prev_mask < 2 << w; ++prev_mask) {
-        if (!domino_compatible(prev_mask, bitmask))
-          continue;
-        if (dp[i - 1][prev_mask] == INT_MIN)
-          continue;
-        dp[i][bitmask] =
-            max(dp[i][bitmask],
-                dp[i - 1][prev_mask] + (__builtin_popcount(bitmask)) / 2);
+int solve(int h, int w, vector<vector<int>> &grid) {
+  if (h <= 1 || w <= 1) return 0;
+  
+  const auto is_compatible = [&](int mask, int i) {
+    for(int j = 0; j < w; ++j){
+      if((mask & (1 << j)) && !(grid[i][j] && grid[i-1][j]))
+        return false;
+    }
+    return true;
+  };
+  
+  vector<bool> valid(1 << w, true);
+  for(int mask = 0; mask < (1 << w); ++mask){
+    int count = 0;
+    for (int i = 0; i < w; ++i) {
+      if (mask & (1 << i)) {
+        ++count;
+      } else if (count % 2 != 0) {
+        valid[mask] = false;
+        break;
       }
     }
   }
-  int ans = 0;
-  for (int bitmask = 0; bitmask < 2 << w; ++bitmask) {
-    if (dp[h - 1][bitmask] == INT_MIN)
-      continue;
-    ans = max(ans, dp[h - 1][bitmask]);
+  
+  vector<vector<int>> dp(h, vector<int>(1 << w, 0));
+  const auto unset = [&](int mask, int i) {
+    int ans = 0;
+    for (int j = 0; j < w; ++j) {
+      if (mask & (1 << j)) {
+        ans = max(ans, dp[i][mask - (1 << j)]);
+      }
+    }
+    return ans;
+  };
+  
+  for (int i = 1; i < h; ++i) {
+    for (int mask = 0; mask < (1 << w); ++mask) {
+      if (mask == 0) {
+        dp[i][mask] = dp[i - 1][(1 << w) - 1];
+        continue;
+      }
+      int max_without = unset(mask, i);
+      int max_with = valid[mask] && is_compatible(mask, i) 
+        ? dp[i - 1][((1 << w) - 1) ^ mask] + (__builtin_popcount(mask) / 2)
+        : 0;
+      dp[i][mask] = max(max_with, max_without);
+    }
   }
-  return ans;
+  return dp[h - 1][(1 << w) - 1];
 }
+
 
 int main() {
   ios_base::sync_with_stdio(false);
@@ -68,17 +60,17 @@ int main() {
   int t;
   cin >> t;
   while (t--) {
-    int h, w;
+    int h, w, k;
     cin >> h >> w;
-    vector<int> grid(h);
+    vector<vector<int>> grid(h, vector<int>(w, 0));
     for (int i = 0; i < h; ++i) {
       for (int j = 0; j < w; ++j) {
-        int x;
-        cin >> x;
-        grid[i] = grid[i] << 1 | x;
+        cin >> k;
+        if(k && (i > 0) && i < (h - 1) && (j > 0) && (j < (w - 1))){
+            grid[i-1][j-1] = 1;
+        }
       }
     }
-    int ans = solve(h, w, grid);
-    cout << ans << '\n';
+    cout << solve(h - 2, w - 2, grid) << '\n';
   }
 }

@@ -2,40 +2,29 @@
 
 using namespace std;
 
-// direct: city i is repaired;
-// indirect: city i is repaired (indirectly), i.e., by repairing one of its
-// children; no_repair: city i has not been repaired and, therefore, still needs
-// to be repaired.
-tuple<int, int, int> recsolve(unordered_map<int, vector<int>> &children,
-                              vector<int> &costs, int u) {
-  if (children[u].size() == 0) { // leaf?
-    return {costs[u], costs[u], 0};
+// [no_repair, indirect_repair, repair]
+tuple<int, int, int> recsolve(int n, vector<vector<int>> &adj, vector<int> &c,
+                              int u) {
+  if (adj[u].size() == 0) { // leaf
+    return {0, c[u], c[u]};
   }
-  vector<pair<int, int>> child_costs;
-  child_costs.reserve(children[u].size());
-  int sum_indirect = 0, sum_no_repair = 0;
-  for (const auto &v : children[u]) {
-    int direct, indirect, no_repair;
-    tie(direct, indirect, no_repair) = recsolve(children, costs, v);
-    child_costs.push_back({direct, indirect});
-    sum_indirect += indirect;
+  int sum_no_repair = 0, sum_indirect = 0,
+      candidate = INT_MAX / 8; // = repair_i - indirect_i
+  for (int v : adj[u]) {
+    int no_repair, indirect_repair, repair;
+    tie(no_repair, indirect_repair, repair) = recsolve(n, adj, c, v);
     sum_no_repair += no_repair;
+    sum_indirect += indirect_repair;
+    candidate = min(candidate, repair - indirect_repair);
   }
-  // direct: current_cost + sum(no_repair_children_costs)
-  // indirect: direct_any_child + sum(indirect_children_costs \ child)
-  // no_repair: sum(indirect_children_costs)
-  // no_repair <= indirect <= direct.
-  const int direct = costs[u] + sum_no_repair;
-  int indirect = INT_MAX;
-  for (const auto &d_i : child_costs) {
-    int d, i;
-    tie(d, i) = d_i;
-    indirect = min(indirect, sum_indirect - i + d);
-  }
-  indirect = min(direct, indirect);
-  const int no_repair = min(indirect, sum_indirect);
+  int repair = c[u] + sum_no_repair;
+  int indirect_repair = min(repair, candidate + sum_indirect);
+  int no_repair = min(indirect_repair, sum_indirect);
+  return {no_repair, indirect_repair, repair};
+}
 
-  return {direct, indirect, no_repair};
+int solve(int n, vector<vector<int>> &adj, vector<int> &c) {
+  return get<1>(recsolve(n, adj, c, 0));
 }
 
 int main() {
@@ -46,18 +35,16 @@ int main() {
   while (t--) {
     int n;
     cin >> n;
-    unordered_map<int, vector<int>> children;
+    vector<vector<int>> adj(n);
     for (int i = 0; i < n - 1; ++i) {
-      int x, y;
-      cin >> x >> y;
-      children[x].push_back(y);
+      int a, b;
+      cin >> a >> b;
+      adj[a].push_back(b);
     }
-    vector<int> costs(n);
+    vector<int> c(n);
     for (int i = 0; i < n; ++i) {
-      cin >> costs[i];
+      cin >> c[i];
     }
-    int direct, indirect, no_repair;
-    tie(direct, indirect, no_repair) = recsolve(children, costs, 0);
-    cout << min(direct, indirect) << '\n';
+    cout << solve(n, adj, c) << '\n';
   }
 }

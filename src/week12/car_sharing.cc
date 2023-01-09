@@ -1,35 +1,31 @@
 #include <bits/stdc++.h>
 
-using namespace std;
-
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/cycle_canceling.hpp>
-#include <boost/graph/find_flow_cost.hpp>
 #include <boost/graph/push_relabel_max_flow.hpp>
 #include <boost/graph/successive_shortest_path_nonnegative_weights.hpp>
+#include <boost/graph/find_flow_cost.hpp>
 
-// Graph Type with nested interior edge properties for Cost Flow Algorithms
-typedef boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS>
-    traits;
-typedef boost::adjacency_list<
-    boost::vecS, boost::vecS, boost::directedS, boost::no_property,
-    boost::property<
-        boost::edge_capacity_t, long,
-        boost::property<
-            boost::edge_residual_capacity_t, long,
+using namespace std;
+
+struct Request {
+  int s, t, d, a, p;
+};
+
+using traits = boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS>;
+using graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, boost::no_property,
+    boost::property<boost::edge_capacity_t, long,
+        boost::property<boost::edge_residual_capacity_t, long,
             boost::property<boost::edge_reverse_t, traits::edge_descriptor,
-                            boost::property<boost::edge_weight_t, long>>>>>
-    graph; // new! weightmap corresponds to costs
+                boost::property <boost::edge_weight_t, long>>>>>;
 
-typedef boost::graph_traits<graph>::edge_descriptor edge_desc;
-typedef boost::graph_traits<graph>::vertex_descriptor vertex_desc;
-typedef boost::graph_traits<graph>::out_edge_iterator out_edge_it; // Iterator
+using edge_desc = boost::graph_traits<graph>::edge_descriptor;
+using out_edge_it = boost::graph_traits<graph>::out_edge_iterator;
 
-// Custom edge adder class
 class edge_adder {
-  graph &G;
+ graph &G;
 
-public:
+ public:
   explicit edge_adder(graph &G) : G(G) {}
   void add_edge(int from, int to, long capacity, long cost) {
     auto c_map = boost::get(boost::edge_capacity, G);
@@ -41,84 +37,75 @@ public:
     c_map[rev_e] = 0; // reverse edge has no capacity!
     r_map[e] = rev_e;
     r_map[rev_e] = e;
-    w_map[e] = cost;      // new assign cost
-    w_map[rev_e] = -cost; // new negative cost
+    w_map[e] = cost;   // new assign cost
+    w_map[rev_e] = -cost;   // new negative cost
   }
 };
 
-struct Booking {
-  int s, t, d, a, p;
-};
-
-constexpr int mnT = 0;
-constexpr int mxT = 1'000'000;
-
-vector<unordered_map<int, int>> compress_time(int s,
-                                              vector<Booking> &bookings) {
-  vector<set<int>> relevant_times(s);
-  for (int i = 0; i < s; ++i) {
-    relevant_times[i].insert(0);
-    for (const auto &booking : bookings) {
-      relevant_times[i].insert(booking.d);
-      relevant_times[i].insert(booking.a);
+long solve(const int n, const int s, vector<int> &l, vector<Request> &requests) {
+  // coordinate compression of the order times per station
+  vector<map<int, int>> compressed(s);
+  const auto insert_compressed = [&](int station, int time) {
+    if (compressed[station].find(time) == compressed[station].end()) {
+      compressed[station][time] = compressed[station].size();
     }
-    relevant_times[i].insert(mxT);
-  }
-
-  // TODO determine max size and extend the individual stations
-  vector<unordered_map<int, int>> compressed(s);
-  for (int i = 0; i < s; ++i) {
-    for (const int t : relevant_times[i]) {
-      compressed[i][t] = compressed[i].size();
-    }
-  }
-  return compressed;
-}
-
-long solve(int n, int s, vector<int> &I, vector<Booking> &bookings) {
-  // compress the times (we just care about the order)
-  vector<unordered_map<int, int>> compressed = compress_time(s, bookings);
-  const int num_times = compressed[0].size();
-  auto id = [&](int station, int time) {
-    return compressed[station][time] * s + station;
   };
-  // cout << mxT << ": " << id(0, 0) << "," << id(0, mxT) << endl;
-  graph G(num_times * s);
+  int max_profit = 0, max_time = 0;
+  for (const auto &req: requests) {
+    insert_compressed(req.s, req.d);
+    insert_compressed(req.t, req.a);
+    max_profit = max(max_profit, req.p);
+    max_time = max(max_time, req.a);
+  }
+  vector<int> prefix(s);
+  for (int i = 1; i < s; ++i) {
+    prefix[i] = prefix[i - 1] + compressed[i - 1].size();
+  }
+  graph G(2 + prefix[s - 1] + compressed[s - 1].size());
   edge_adder edges(G);
-  const vertex_desc v_source = boost::add_vertex(G);
-  const vertex_desc v_sink = boost::add_vertex(G);
-
-  int max_profit = 0, num_cars = 0;
-  for (const auto &booking : bookings) {
-    max_profit = max(max_profit, booking.p);
-  }
+  const auto c_map = boost::get(boost::edge_capacity, G);
+  const auto rc_map = boost::get(boost::edge_residual_capacity, G);
+  
+  const int v_source = 0;
+  const int v_sink = 1;
+  const auto v_node = [&](int station, int time) {
+    return 2 + prefix[station] + compressed[station][time];
+  };
+  
+  // setup the graph for each station
   for (int i = 0; i < s; ++i) {
-    num_cars += I[i];
-  }
-
-  for (int i = 0; i < s; ++i) {
-    // add from the source to (s_i, starting_time = 0)
-    edges.add_edge(v_source, id(i, mnT), I[i], 0);
-    // add edges between successive times in each station
-    for (int t = 0; t < mxT; ++t) {
-      edges.add_edge(id(i, t), id(i, t + 1), INT_MAX, max_profit);
+    if (compressed[i].size() == 0) continue;
+    auto it = compressed[i].begin();
+    int prev_time = (it++)->first;
+    // add the "initial" number of cars to each station
+    edges.add_edge(v_source, v_node(i, prev_time), l[i], (prev_time) * max_profit);
+    
+    // connect sucessive times per station
+    for (; it != compressed[i].end(); ++it) {
+      int curr_time = it->first;
+      edges.add_edge(v_node(i, prev_time), v_node(i, curr_time), INT_MAX, (curr_time - prev_time) * max_profit);
+      prev_time = curr_time;
     }
-    // add from (s_i, ending_time = mxT) to the sink
-    edges.add_edge(id(i, mxT), v_sink, INT_MAX, 0);
+    
+    // move the cars at the end to the sink
+    edges.add_edge(v_node(i, prev_time), v_sink, INT_MAX, (max_time - prev_time) * max_profit);
   }
-
-  // add edges for the bookings
-  for (const auto &booking : bookings) {
-    const int cost =
-        (times[booking.a] - times[booking.d]) * max_profit - booking.p;
-    edges.add_edge(id(booking.s - 1, booking.d), id(booking.t - 1, booking.a3),
-                   1, cost);
+  
+  // add the requests
+  for (const auto &req: requests) {
+    edges.add_edge(v_node(req.s, req.d), v_node(req.t, req.a), 1, (req.a - req.d) * max_profit - req.p);
   }
-
-  const long expected_cost = num_cars * (times.size() - 1) * max_profit;
+  
+  boost::push_relabel_max_flow(G, v_source, v_sink);
   boost::successive_shortest_path_nonnegative_weights(G, v_source, v_sink);
   long cost = boost::find_flow_cost(G);
-  return expected_cost - cost;
+  
+  long flow = 0;
+  out_edge_it e, eend;
+  for(boost::tie(e, eend) = boost::out_edges(boost::vertex(v_source,G), G); e != eend; ++e) {
+    flow += c_map[*e] - rc_map[*e];     
+  }
+  return flow * max_time * max_profit - cost;
 }
 
 int main() {
@@ -129,17 +116,18 @@ int main() {
   while (t--) {
     int n, s;
     cin >> n >> s;
-    vector<int> I(s);
+    vector<int> l(s);
     for (int i = 0; i < s; ++i) {
-      cin >> I[i];
+      cin >> l[i];
     }
-    vector<Booking> bookings;
-    bookings.reserve(n);
+    vector<Request> requests;
+    requests.reserve(n);
     for (int i = 0; i < n; ++i) {
       int s, t, d, a, p;
       cin >> s >> t >> d >> a >> p;
-      bookings.push_back({s, t, d, a, p});
+      --s, --t; // IMPORTANT: 1 <= s, t
+      requests.push_back({s, t, d, a, p});
     }
-    cout << solve(n, s, I, bookings) << '\n';
+    cout << solve(n, s, l, requests) << '\n';
   }
 }

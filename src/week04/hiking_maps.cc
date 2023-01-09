@@ -1,96 +1,100 @@
 #include <bits/stdc++.h>
 
-#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
-
-using K = CGAL::Exact_predicates_exact_constructions_kernel;
-using Point = K::Point_2;
-using Line = K::Line_2;
-using Seg = K::Segment_2;
-using Triangle = K::Triangle_2;
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 
 using namespace std;
 
-Line read_line() {
-  int x1, y1, x2, y2;
-  cin >> x1 >> y1 >> x2 >> y2;
-  Point p1(x1, y1), p2(x2, y2);
-  return Line(p1, p2);
-}
+using K = CGAL::Exact_predicates_inexact_constructions_kernel;
+using Point = K::Point_2;
 
-Point read_point() {
-  int x, y;
+istream &operator>>(istream &is, Point &p) {
+  long x, y;
   cin >> x >> y;
-  return Point(x, y);
+  p = Point(x, y);
+  return is;
 }
 
-Triangle read_triangle() {
-  Line l1 = read_line();
-  Line l2 = read_line();
-  Line l3 = read_line();
-  auto o1 = CGAL::intersection(l1, l2);
-  auto o2 = CGAL::intersection(l1, l3);
-  auto o3 = CGAL::intersection(l2, l3);
-  const Point *p1 = boost::get<Point>(&*o1);
-  const Point *p2 = boost::get<Point>(&*o2);
-  const Point *p3 = boost::get<Point>(&*o3);
-  assert(p1 && p2 && p3);
-  return Triangle(*p1, *p2, *p3);
+struct Triangle {
+  Triangle(array<Point, 6> &points)
+    : points(points) {}
+  
+  bool intersect(const Point &p) const {
+    for (int i = 0; i < 3; ++i) {
+      const Point &p0 = points[2 * i], &p1 = points[2 * i + 1], &q = points[(2 * i + 2) % 6];
+      auto op = CGAL::orientation(p0, p1, p);
+      if (op == CGAL::COLLINEAR) continue;
+      auto ot = CGAL::orientation(p0, p1, q);
+      if (op != ot) return false;
+    }
+    return true;
+  }
+  
+private:
+  array<Point, 6> points;
+};
+
+int solve(const int m, const int n, vector<Point> &points, vector<Triangle> &maps) {
+  vector<vector<bool>> contains(n, vector<bool>(m));
+  for (int i = 0; i < n; ++i) {
+    const auto &t = maps[i];
+    for (int j = 0; j < m; ++j) {
+      contains[i][j] = t.intersect(points[j]);
+    }
+  }
+  const int k = m - 1; // number of paths
+  const auto is_contained = [&](int i, int j) {
+    return contains[i][j] && contains[i][j + 1];
+  };
+  int n_rem = k, j = 0, ans = INT_MAX;
+  vector<int> cnts(k);
+  for (int i = 0; i < n; ++i) {
+    // add the "map i"
+    for (int kk = 0; kk < k; ++kk) {
+      if (is_contained(i, kk)) {
+        ++cnts[kk];
+        if (cnts[kk] == 1) --n_rem;
+      }
+    }
+    // remove the "map j"?
+    while (j < i && n_rem == 0) {
+      bool can = true;
+      for (int kk = 0; kk < k; ++kk) {
+        if (is_contained(j, kk) && cnts[kk] == 1) {
+          can = false;
+          break;
+        }
+      }
+      if (!can) break;
+      for (int kk = 0; kk < k; ++kk) {
+        cnts[kk] -= is_contained(j, kk);
+      }
+      ++j;
+    }
+    if (n_rem == 0) ans = min(ans, i - j + 1);
+  }
+  return ans;
 }
 
 int main() {
   ios_base::sync_with_stdio(false);
-  int c;
-  cin >> c;
-  while (c--) {
+  cin.tie(nullptr);
+  int t;
+  cin >> t;
+  while (t--) {
     int m, n;
     cin >> m >> n;
-    vector<Point> points;
-    points.reserve(m);
+    vector<Point> points(m);
     for (int i = 0; i < m; ++i) {
-      points.push_back(read_point());
+      cin >> points[i];
     }
-    vector<vector<bool>> intersects(n, vector<bool>(m));
-    Triangle map;
+    vector<Triangle> maps;
+    maps.reserve(n);
     for (int i = 0; i < n; ++i) {
-      map = read_triangle();
-      for (int j = 0; j < m; ++j)
-        intersects[i][j] = CGAL::do_intersect(map, points[j]);
+      array<Point, 6> map_points;
+      for (int i = 0; i < 6; ++i)
+        cin >> map_points[i];
+      maps.emplace_back(map_points);
     }
-    auto covers = [&](int j, int k) {
-      return intersects[j][k] && intersects[j][k + 1];
-    };
-    const int l = m - 1;
-    vector<int> counts(l);
-    int missing = l, ans = INT_MAX;
-    for (int i = 0, j = 0; j < n; ++j) {
-      for (int k = 0; k < l; ++k) {
-        // +j
-        if (covers(j, k)) {
-          if (counts[k] == 0)
-            --missing;
-          ++counts[k];
-        }
-      }
-      if (missing > 0)
-        continue;
-      while (i < j) {
-        bool can = true;
-        for (int k = 0; k < l; ++k) {
-          if (covers(i, k) && counts[k] <= 1) {
-            can = false;
-            break;
-          }
-        }
-        if (!can)
-          break;
-        for (int k = 0; k < l; ++k) {
-          if (covers(i, k))
-            --counts[k];
-        }
-        ++i;
-      }
-      ans = min(ans, j - i + 1);
-    }
-    cout << ans << endl;
+    cout << solve(m, n, points, maps) << '\n';
   }
 }

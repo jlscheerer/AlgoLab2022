@@ -2,63 +2,54 @@
 
 using namespace std;
 
-// index word_id
-using word_occ = pair<int, int>;
+struct IWord {
+  int index, word;
+};
 
-int solve(const int n, vector<word_occ> &p) {
+long solve(int n, vector<IWord> &words) {
   vector<int> counts(n);
-  // build initial
-  int remaining = n, i = 0, j = 0;
-  for (; i < (int)p.size() && remaining > 0; ++i) {
-    const int word_id = p[i].second;
-    if (counts[word_id] == 0) {
-      --remaining;
+  int i = 0, j = 0, rem = n;
+  long ans = INT_MAX;
+  for (; i < (int)words.size(); ++i) {
+    rem -= counts[words[i].word] == 0;
+    ++counts[words[i].word];
+    while (rem == 0 && j < i && counts[words[j].word] > 1) {
+      --counts[words[j].word];
+      j++;
     }
-    ++counts[word_id];
-    if (remaining == 0)
-      break;
-  }
-  int ans = INT_MAX;
-  auto collapse = [&]() {
-    while (j < i && counts[p[j].second] > 1) {
-      --counts[p[j].second];
-      ++j;
+    long span = (long)words[i].index - words[j].index + 1;
+    if (rem == 0 && span < ans) {
+      ans = span;
     }
-    ans = min(ans, p[i].first - p[j].first + 1);
-  };
-  collapse();
-
-  ++i;
-  // try "good" intervals
-  for (; i < (int)p.size(); ++i) {
-    const int word_id = p[i].second;
-    ++counts[word_id];
-    collapse();
   }
-
   return ans;
 }
 
 int main() {
   ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
   int t;
   cin >> t;
   while (t--) {
     int n;
     cin >> n;
-    vector<int> occs(n);
+    vector<int> m(n);
+    int total_words = 0;
     for (int i = 0; i < n; ++i) {
-      cin >> occs[i];
+      cin >> m[i];
+      total_words += m[i];
     }
-    vector<word_occ> p;
+    vector<IWord> words;
+    words.reserve(total_words);
     for (int i = 0; i < n; ++i) {
-      for (int j = 0; j < occs[i]; ++j) {
-        int pos;
-        cin >> pos;
-        p.emplace_back(pos, i);
+      for (int pi = 0; pi < m[i]; ++pi) {
+        int index;
+        cin >> index;
+        words.push_back({index, i});
       }
     }
-    sort(p.begin(), p.end());
-    cout << solve(n, p) << endl;
+    sort(words.begin(), words.end(),
+         [](const auto &a, const auto &b) { return a.index < b.index; });
+    cout << solve(n, words) << '\n';
   }
 }

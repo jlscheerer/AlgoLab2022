@@ -1,61 +1,73 @@
 #include <bits/stdc++.h>
 
-#include <CGAL/Gmpz.h>
-#include <CGAL/QP_functions.h>
 #include <CGAL/QP_models.h>
+#include <CGAL/QP_functions.h>
+#include <CGAL/Gmpz.h>
 
 using namespace std;
 
-using InputType = int;
-using ExactType = CGAL::Gmpz;
+using IT = int;
+using ET = CGAL::Gmpz;
 
-using Program = CGAL::Quadratic_program<InputType>;
-using Solution = CGAL::Quadratic_program_solution<ExactType>;
+using Program = CGAL::Quadratic_program<IT>;
+using Solution = CGAL::Quadratic_program_solution<ET>;
 
-using namespace std;
-
-template <typename T> double to_double(T &obj) {
-  return (obj.numerator().to_double() / obj.denominator().to_double());
-}
-
-void solve(int n, int d) {
-  Program lp(CGAL::SMALLER, false, 0, false, 0);
-  const int r = d;
+void solve(const int n, const int d, vector<vector<int>> &a, vector<int> &b) {
+  vector<int> norms(n);
   for (int i = 0; i < n; ++i) {
-    int coef = 0;
     for (int j = 0; j < d; ++j) {
-      int aij;
-      cin >> aij;
-      lp.set_a(j, i, aij); //   sum (aij * xj) + ||a|| <= b
-      coef += aij * aij;
+      norms[i] += a[i][j] * a[i][j];
     }
-    coef = (int)sqrt((double)coef);
-    lp.set_a(r, i, coef);
-    int b;
-    cin >> b;
-    lp.set_b(i, b);
+    norms[i] = sqrt(norms[i]);
   }
+  
+  Program lp (CGAL::SMALLER, false, 0, false, 0); 
+  // coordinates and radius of the circle
+  const auto v_x = [&](int index) {
+    return index;
+  };
+  const int r = d;
   lp.set_l(r, true, 0); // r >= 0
-  lp.set_c(r, -1);      // maximize r
-  Solution s = CGAL::solve_linear_program(lp, ExactType());
+  
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < d; ++j) {
+      lp.set_a(v_x(j), i, a[i][j]);
+    }
+    lp.set_a(r, i, norms[i]);
+    lp.set_b(i, b[i]);
+  }
+  
+  // objective function: maximize the radius
+  lp.set_c(r, -1);
+  
+  Solution s = CGAL::solve_linear_program(lp, ET());
   if (s.is_unbounded()) {
     cout << "inf\n";
   } else if (s.is_infeasible()) {
     cout << "none\n";
   } else {
-    int obj = floor(-to_double(s.objective_value()));
-    cout << obj << "\n";
+    auto obj = -s.objective_value();
+    long num = obj.numerator().to_double(), den = obj.denominator().to_double();
+    cout << num / den << '\n';
   }
 }
 
 int main() {
   ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
   while (true) {
     int n, d;
     cin >> n;
-    if (n == 0)
-      break;
+    if (n == 0) break;
     cin >> d;
-    solve(n, d);
+    vector<vector<int>> a(n, vector<int>(d));
+    vector<int> b(n);
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < d; ++j) {
+        cin >> a[i][j];
+      }
+      cin >> b[i];
+    }
+    solve(n, d, a, b);
   }
 }

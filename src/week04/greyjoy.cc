@@ -1,108 +1,105 @@
 #include <bits/stdc++.h>
-#define ll long long
 
 using namespace std;
 
-// found, max
-pair<bool, int> get_for(unordered_map<ll, tuple<int, int, int>> &m, int ri,
-                        int cost) {
-  if (!m.count(cost))
-    return {false, INT_MIN / 4};
-  auto found = m[cost];
-  int pmax = get<0>(found), pwhere = get<1>(found), psmax = get<2>(found);
-  if (pwhere == ri) {
-    if (psmax > INT_MIN / 4)
-      return {true, psmax};
-    return {false, INT_MIN / 4};
-  }
-  return {true, pmax};
-}
-
-int solve_waterway(vector<ll> &c, vector<ll> &r, int ri,
-                   unordered_map<ll, tuple<int, int, int>> &m, ll target) {
-  const int n = r.size();
-  int ans = 0;
-  int j = n - 1;
-  ll cost = 0;
-
-  const auto update = [&](int i, int j, ll cost) {
-    if (cost == target) {
-      ans = max(ans, abs(i - j) + 1);
+struct WayMap {
+  void insert(int wi, long sum, int length) {
+    if (m_.find(sum) == m_.end()) {
+      m_[sum] = {length, wi, -1};
       return;
-    } else if (cost < target && j <= 0) {
-      auto other = get_for(m, ri, target - cost);
-      if (other.first)
-        ans = max(ans, abs(i) + 1 + other.second);
     }
-  };
-
-  for (; j >= 0; --j) {
-    ll cur_cost = c[r[j]];
-    cost += cur_cost;
-    if (cost >= target)
-      break;
+    int mx, wj, smx;
+    tie(mx, wj, smx) = m_[sum];
+    if (length > mx) {
+      smx = mx;
+      mx = length;
+      wj = wi;
+    } else if (length == mx) {
+      wj = -1; // no longer relevant.
+    } else {
+      smx = max(smx, length);
+    }
+    m_[sum] = {mx, wj, smx};
   }
-  update(n - 1, j, cost);
-  for (int i = n - 2; i >= 0; --i) {
-    cost -= c[r[i + 1]];
-    while (j > 0 && cost < target)
-      cost += c[r[--j]];
-    update(i, j, cost);
+  
+  // find the maximum number of islands conquered with
+  // num_poeple = sum & wi = != wj 
+  int lookup(int wj, long sum) {
+    if (m_.find(sum) == m_.end()) return -1;
+    int mx, wi, smx;
+    tie(mx, wi, smx) = m_[sum];
+    if (wi == wj) return smx;
+    return mx;
+  }
+  
+private:
+  // [max, wi, second_max]
+  unordered_map<long, tuple<int, int, int>> m_;
+};
+
+int solve(int n, int k, int w, vector<int> &c, vector<vector<int>> &ways) {
+  WayMap wm;
+  for (int wi = 0; wi < w; ++wi) {
+    long prefix = 0;
+    for (int length = 0; length < (int)ways[wi].size(); ++length) {
+      const int ri = ways[wi][length];
+      prefix += c[ri];
+      wm.insert(wi, prefix, length);
+    }
+  }
+  int ans = 0;
+  for (int wi = 0; wi < w; ++wi) {
+    reverse(ways[wi].begin(), ways[wi].end());
+    const int m = ways[wi].size();
+    int j = 0; long sum = 0;
+    for (int i = 0; i < m; ++i) {
+      sum += c[ways[wi][i]];
+      while (j < i && sum > k) {
+        sum -= c[ways[wi][j]];
+        ++j;
+      }
+      if (sum == k) {
+        ans = max(ans, i - j + 1);
+      }
+    }
+    while (j < m) {
+      long target = k - sum + c[0];
+      if (target > 0) {
+        int other_length = wm.lookup(wi, target);
+        if (other_length != -1) {
+          ans = max(ans, m - j + other_length);
+        }
+      }
+      sum -= c[ways[wi][j]];
+      ++j;
+    }
   }
   return ans;
 }
 
-unordered_map<ll, tuple<int, int, int>> build_prefix(vector<ll> &c,
-                                                     vector<vector<ll>> &rs) {
-  // max where/-1(multiple) second_max(INT_MIN / 4)
-  unordered_map<ll, tuple<int, int, int>> m;
-  for (int ri = 0; ri < (int)rs.size(); ++ri) {
-    const auto &r = rs[ri];
-    ll cost = 0;
-    for (int i = 1; i < (int)r.size(); ++i) { // exclude pyke
-      cost += c[r[i]];
-      int islands = i;
-      if (m.count(cost)) {
-        int pmax, pwhere, psmax;
-        tie(pmax, pwhere, psmax) = m[cost];
-        if (pmax > islands) {
-          m[cost] = {pmax, pwhere, max(psmax, islands)};
-        } else if (pmax == islands) {
-          m[cost] = {pmax, -1,
-                     pmax}; // found duplicate no need to track location
-        } else if (pmax < islands) {
-          m[cost] = {islands, ri, pmax};
-        }
-      } else {
-        m[cost] = {islands, ri, INT_MIN / 4};
-      }
-    }
-  }
-  return m;
-}
-
 int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
   int t;
   cin >> t;
   while (t--) {
     int n, k, w;
     cin >> n >> k >> w;
-    vector<ll> c(n);
-    for (int i = 0; i < n; ++i)
+    vector<int> c(n);
+    for (int i = 0; i < n; ++i) {
       cin >> c[i];
-    vector<vector<ll>> rs;
+    }
+    vector<vector<int>> ways(w);
     for (int i = 0; i < w; ++i) {
       int l;
       cin >> l;
-      rs.emplace_back(l);
-      for (int j = 0; j < l; ++j)
-        cin >> rs.back()[j];
+      ways[i].reserve(l);
+      for (int j = 0; j < l; ++j) {
+        int r;
+        cin >> r;
+        ways[i].push_back(r);
+      }
     }
-    unordered_map<ll, tuple<int, int, int>> m = build_prefix(c, rs);
-    int ans = 0;
-    for (int ri = 0; ri < w; ++ri) {
-      ans = max(ans, solve_waterway(c, rs[ri], ri, m, k));
-    }
-    cout << ans << endl;
+    cout << solve(n, k, w, c, ways) << '\n';
   }
 }
