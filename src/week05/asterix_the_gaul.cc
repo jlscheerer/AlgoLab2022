@@ -2,101 +2,105 @@
 
 using namespace std;
 
-using ll = long long;
+struct Movement {
+  long d, t;
+  
+  bool operator<(const Movement &other) {
+    return pair<long, long>{t, d} < pair<long, long>{other.t, other.d};
+  }
+};
 
-unordered_map<int, vector<pair<ll, ll>>> split(vector<pair<ll, ll>> &M) {
+// ans[i]: sorted (t asc, d monotonically inc.) list of "combined" movements taking i turns
+vector<vector<Movement>> split_and_list(vector<Movement> &M) {
   const int n = M.size();
-  unordered_map<int, vector<pair<ll, ll>>> result;
-  for (int pick = 0; pick < 1 << n; ++pick) {
-    ll d = 0, t = 0;
+  vector<vector<Movement>> ans(n + 1);
+  for (int config = 0; config < 1 << n; ++config) {
+    int num_moves = __builtin_popcount(config);
+    long d = 0, t = 0;
     for (int i = 0; i < n; ++i) {
-      if (pick & (1 << i)) {
-        d += M[i].first;
-        t += M[i].second;
+      if (config & (1 << i)) {
+        d += M[i].d;
+        t += M[i].t;
       }
     }
-    int moves = __builtin_popcount(pick);
-    result[moves].emplace_back(t, d);
+    ans[num_moves].push_back({d, t});
   }
-  for (auto &moves_opts : result) {
-    vector<pair<ll, ll>> &opts = moves_opts.second;
-    sort(opts.begin(), opts.end());
-    ll dist = 0;
-    for (int i = 0; i < (int)opts.size(); ++i) {
-      dist = max(dist, opts[i].second);
-      opts[i].second = dist;
+  for (int i = 0; i <= n; ++i) {
+    sort(ans[i].begin(), ans[i].end());
+    // want to make the moves monotonically increasing, so that we can binary search later.
+    long max_dist = 0;
+    for (int j = 0; j < (int)ans[i].size(); ++j) {
+      max_dist = max(max_dist, ans[i][j].d);
+      ans[i][j].d = max_dist;
     }
   }
-  return result;
+  return ans;
+}
+
+int solve(const int n, const int m, long D, long T, vector<Movement> &M, vector<long> s) {
+  // Split & List: Split the possible Movements
+  vector<Movement> M1(M.begin(), M.begin() + n / 2);
+  const int m1 = M1.size();
+  
+  vector<Movement> M2(M.begin() + n / 2, M.end());
+  const int m2 = M2.size();
+  vector<vector<Movement>> split = split_and_list(M2);
+  
+  int ans = INT_MAX;
+  for (int config = 0; config < 1 << m1; ++config) {
+    int num_moves = __builtin_popcount(config);
+    long d = 0, t = 0;
+    for (int i = 0; i < m1; ++i) {
+      if (config & (1 << i)) {
+        d += M1[i].d;
+        t += M1[i].t;
+      }
+    }
+    for (int other_moves = 0; other_moves <= m2; ++other_moves) {
+      const int total_moves = num_moves + other_moves;
+      if (total_moves == 0) continue;
+      
+      // find the maximial distance we can in the remaining time taking other_moves moves.
+      Movement BOUND{INT_MIN, T - t};
+      auto it = lower_bound(split[other_moves].begin(), split[other_moves].end(), BOUND);
+      int j = distance(split[other_moves].begin(), it) - 1;
+      if (j < 0) continue;
+      
+      // calculate the minimum "potion strength" we would need to make this work.
+      long rem_dist = D - d - split[other_moves][j].d;
+      long inc_per_turn = (rem_dist + total_moves - 1) / total_moves;
+      
+      // do we have such a potion?
+      auto s_it = lower_bound(s.begin(), s.end(), inc_per_turn);
+      if (s_it != s.end()) {
+        ans = min(ans, (int)distance(s.begin(), s_it));
+      }
+    }
+  }
+  return ans;
 }
 
 int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
   int t;
   cin >> t;
   while (t--) {
-    ll n, m, D, T;
+    long n, m, D, T;
     cin >> n >> m >> D >> T;
-    vector<pair<ll, ll>> M1, M2;
-    M1.reserve(n - n / 2);
-    M2.reserve(n / 2);
+    vector<Movement> M;
+    M.reserve(n);
     for (int i = 0; i < n; ++i) {
-      ll d, t;
+      long d, t;
       cin >> d >> t;
-      if (i % 2 == 0)
-        M1.emplace_back(d, t);
-      else
-        M2.emplace_back(d, t);
+      M.push_back({d, t});
     }
-    vector<ll> s(m);
+    vector<long> s(m + 1);
     for (int i = 0; i < m; ++i) {
-      cin >> s[i];
+      cin >> s[i + 1];
     }
-    int ans = INT_MAX;
-    unordered_map<int, vector<pair<ll, ll>>> other = split(M2);
-    const int m1 = M1.size();
-    for (int pick = 0; pick < 1 << m1; ++pick) {
-      ll d = 0, t = 0;
-      for (int i = 0; i < m1; ++i) {
-        if (pick & (1 << i)) {
-          d += M1[i].first;
-          t += M1[i].second;
-        }
-      }
-      int moves = __builtin_popcount(pick);
-      for (int other_moves = 0; other_moves <= 30; ++other_moves) {
-        auto it =
-            lower_bound(other[other_moves].begin(), other[other_moves].end(),
-                        pair<ll, ll>{T - t, INT_MIN});
-        int j;
-        if (it == other[other_moves].end())
-          j = other[other_moves].size() - 1;
-        else
-          j = (int)(it - other[other_moves].begin()) - 1;
-        if (j < 0)
-          continue;
-        ll other_distance = other[other_moves][j].second;
-        ll dist = d + other_distance;
-        if (dist >= D) {
-          ans = 0;
-          break;
-        }
-        int total_moves = moves + other_moves;
-        if (total_moves == 0)
-          continue;
-        ll remaining_distance = D - dist;
-        ll inc_per_turn = (remaining_distance + total_moves - 1) / total_moves;
-        auto it2 = lower_bound(s.begin(), s.end(), inc_per_turn);
-        if (it2 == s.end())
-          continue;
-        ans = min(ans, (int)(it2 - s.begin()) + 1);
-      }
-      if (ans == 0) {
-        break;
-      }
-    }
-    if (ans < INT_MAX)
-      cout << ans << "\n";
-    else
-      cout << "Panoramix captured\n";
+    int ans = solve(n, m, D, T, M, s);
+    if (ans == INT_MAX) cout << "Panoramix captured\n";
+    else cout << ans << '\n';
   }
 }

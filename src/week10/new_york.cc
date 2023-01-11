@@ -2,78 +2,75 @@
 
 using namespace std;
 
-class window {
-public:
-  int size() { return order.size() - offset; }
-  int min() {
-    while (counts[min_pq.top()] == 0) {
-      min_pq.pop();
-    }
-    return min_pq.top();
+struct Window {
+  int size() const { return path.size(); }
+  int front() const { return path.front().first; }
+  
+  int abs_diff() const { return max() - min(); }
+  int max() const { return *values.rbegin(); }
+  int min() const { return *values.begin(); }
+  
+  void push_front(int index, int h) {
+    path.emplace_front(index, h);
+    values.insert(h);
   }
-  int max() {
-    while (counts[max_pq.top()] == 0) {
-      max_pq.pop();
-    }
-    return max_pq.top();
+  
+  int pop_front() {
+    int index, h;
+    tie(index, h) = path.front();
+    path.pop_front();
+    values.erase(values.find(h));
+    return index;
   }
-  void push_back(int index, int value) {
-    min_pq.push(value);
-    max_pq.push(value);
-    ++counts[value];
-    order.push_back({index, value});
+  
+  void push_back(int index, int h) {
+    path.emplace_back(index, h);
+    values.insert(h);
   }
-  void push_front() {
-    --offset;
-    pair<int, int> value = order[offset];
-    ++counts[value.second];
-    min_pq.push(value.second);
-    max_pq.push(value.second);
+  
+  void pop_back() {
+    int index, h;
+    tie(index, h) = path.back();
+    path.pop_back();
+    values.erase(values.find(h));
   }
-  int pop_back() {
-    pair<int, int> value = order.back();
-    order.pop_back();
-    --counts[value.second];
-    return value.first;
-  }
-  pair<int, int> pop_front() {
-    pair<int, int> value = order[offset];
-    // order.pop_front();
-    ++offset;
-    --counts[value.second];
-    return value;
-  }
-
+  
 private:
-  priority_queue<int, vector<int>, greater<>> min_pq;
-  priority_queue<int, vector<int>, less<>> max_pq;
-  unordered_map<int, int> counts;
-  deque<pair<int, int>> order;
-
-  int offset = 0;
+  // [index, value]
+  deque<pair<int, int>> path;
+  multiset<int> values;
 };
 
-void dfs(const int n, const int k, const int m,
-         unordered_map<int, vector<int>> &adj, vector<int> &h, int node,
-         window &w, vector<bool> &ok) {
-  w.push_back(node, h[node]);
-  int count = 0;
-  while (w.size() && (h[node] - w.min() > k || w.max() - h[node] > k)) {
-    w.pop_front();
-    ++count;
-  }
-  while (w.size() >= m) {
-    int end = w.pop_front().first;
-    ok[end] = true;
-    ++count;
-  }
-  for (int child : adj[node]) {
-    dfs(n, k, m, adj, h, child, w, ok);
-  }
-  for (int i = 0; i < count; ++i) {
-    w.push_front();
-  }
+
+void dfs(int n, int m, int k, vector<int> &h, vector<vector<int>> &adj, Window &w, set<int> &ans, int u) {
+  // add our self to the end of the path
+  w.push_back(u, h[u]);
+  
+  // save our parent if, we exceed the length
+  int par = -1;
+  if (w.size() > m)
+    par = w.pop_front();
+
+  if(w.size() == m && w.abs_diff() <= k)
+    ans.insert(w.front());
+
+  // visit our children
+  for(int v : adj[u])
+    dfs(n, m, k, h, adj, w, ans, v);
+  
+  // restore the parent, if removed
+  if (par != -1)
+    w.push_front(par, h[par]);
+  
+  // remove ourself again at the end
   w.pop_back();
+}
+
+set<int> solve(int n, int m, int k, vector<int> &h, vector<vector<int>> &adj) {
+  Window w;
+  set<int> ans;
+  dfs(n, m, k, h, adj, w, ans, 0);
+  return ans;
 }
 
 int main() {
@@ -81,34 +78,26 @@ int main() {
   cin.tie(nullptr);
   int t;
   cin >> t;
-  while (t--) {
+  while(t--) {
     int n, m, k;
     cin >> n >> m >> k;
     vector<int> h(n);
     for (int i = 0; i < n; ++i) {
       cin >> h[i];
     }
-    unordered_map<int, vector<int>> adj;
+    vector<vector<int>> adj(n);
     for (int i = 0; i < n - 1; ++i) {
       int u, v;
       cin >> u >> v;
       adj[u].push_back(v);
     }
-    window w;
-    vector<bool> ok(n);
-    dfs(n, k, m, adj, h, 0, w, ok);
-    bool printed = false;
-    for (int i = 0; i < n; ++i) {
-      if (!ok[i])
-        continue;
-      if (printed)
-        cout << ' ';
-      cout << i;
-      printed = true;
-    }
-    if (printed)
-      cout << '\n';
-    else
+    set<int> ans = solve(n, m, k, h, adj);
+    if (ans.size() == 0) {
       cout << "Abort mission\n";
+      continue;
+    }
+    for(int x : ans)
+      cout << x << ' ';
+    cout << '\n';
   }
 }

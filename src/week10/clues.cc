@@ -1,75 +1,78 @@
 #include <bits/stdc++.h>
 
-#include <CGAL/Delaunay_triangulation_2.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Triangulation_face_base_2.h>
+#include <CGAL/Delaunay_triangulation_2.h>
 #include <CGAL/Triangulation_vertex_base_with_info_2.h>
-#include <boost/pending/disjoint_sets.hpp>
+#include <CGAL/Triangulation_face_base_2.h>
 
-using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
-using Index = int;
-using Vb = CGAL::Triangulation_vertex_base_with_info_2<Index, Kernel>;
-using Fb = CGAL::Triangulation_face_base_2<Kernel>;
-using Tds = CGAL::Triangulation_data_structure_2<Vb, Fb>;
-using Triangulation = CGAL::Delaunay_triangulation_2<Kernel, Tds>;
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/bipartite.hpp>
+#include <boost/graph/connected_components.hpp>
 
 using namespace std;
 
-using Point = Kernel::Point_2;
-using IPoint = pair<Point, Index>;
+using K = CGAL::Exact_predicates_inexact_constructions_kernel;
+using  Vb = CGAL::Triangulation_vertex_base_with_info_2<int, K>;
+using Fb = CGAL::Triangulation_face_base_2<K>;
+using Tds = CGAL::Triangulation_data_structure_2<Vb, Fb>;
+using Delaunay = CGAL::Delaunay_triangulation_2<K, Tds>;
+using Vertex_handle = Tds::Vertex_handle;
 
-bool dfs(unordered_map<int, vector<int>> &adj, vector<int> &colors, int u,
-         int c) {
-  if (colors[u] != 0) {
-    return colors[u] == c;
+using Point = K::Point_2;
+using IPoint = pair<Point, int>;
+
+using graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>;
+
+unordered_set<int> vertices_in_radius(Delaunay& t, Vertex_handle u, long r) {
+  unordered_set<int> ans;
+  vector<Vertex_handle> q;
+  q.push_back(u);
+  ans.insert(u->info());
+  while (q.size()) {
+    auto v = q.back(); q.pop_back();
+    auto neigh = v->incident_vertices();
+    do {
+      if (!t.is_infinite(neigh) && !ans.count(neigh->info())
+          && CGAL::squared_distance(u->point(), neigh->point()) <= r * r) {
+        ans.insert(neigh->info());
+        q.push_back(neigh);
+      }
+    } while(++neigh != v->incident_vertices());
   }
-  colors[u] = c;
-  for (int v : adj[u]) {
-    if (!dfs(adj, colors, v, -c))
-      return false;
-  }
-  return true;
+  return ans;
 }
 
-bool can_color(const int n, unordered_map<int, vector<int>> &adj) {
-  vector<int> colors(n);
-  for (int i = 0; i < n; ++i) {
-    if (colors[i] != 0)
-      continue;
-    if (!dfs(adj, colors, i, 1))
-      return false;
-  }
-  return true;
-}
-
-void build_adj(unordered_map<int, vector<int>> &adj, deque<IPoint> &window,
-               double r) {
-  IPoint &pj = window.back();
-  for (int i = window.size() - 2; i >= 0; --i) {
-    const IPoint &pi = window[i];
-    if (CGAL::squared_distance(pi.first, pj.first) <= r * r) {
-      adj[pi.second].push_back(pj.second);
-      adj[pj.second].push_back(pi.second);
+struct Network {
+  Network(const int n, const int m, long r, vector<IPoint> &stations) 
+   : t(stations.begin(), stations.end()), r(r), components(n) {
+    graph G(n);
+    for (auto u = t.finite_vertices_begin(); u != t.finite_vertices_end(); ++u) {
+      unordered_set<int> vs = vertices_in_radius(t, u, r);
+      for (int v: vs) {
+        if (u->info() != v)
+          boost::add_edge(u->info(), v, G);
+      }
     }
+    has_interference = !boost::is_bipartite(G);
+    boost::connected_components(G, boost::make_iterator_property_map(components.begin(), boost::get(boost::vertex_index, G)));
   }
-}
-
-bool has_interferences(const int n, vector<IPoint> &stations, double r) {
-  sort(stations.begin(), stations.end(), [](const IPoint &a, const IPoint &b) {
-    return a.first.x() < b.first.x();
-  });
-  unordered_map<int, vector<int>> adj;
-  deque<IPoint> window;
-  for (int i = 0; i < n; ++i) {
-    window.push_back(stations[i]);
-    while ((window.back().first.x() - window.front().first.x()) > r) {
-      window.pop_front();
-    }
-    build_adj(adj, window, r);
+  
+  bool can_route(Point a, Point b) const {
+    if (has_interference) return false;
+    if (CGAL::squared_distance(a, b) <= r * r) return true;
+    auto va = t.nearest_vertex(a), vb = t.nearest_vertex(b);
+    if (CGAL::squared_distance(a, va->point()) > r * r
+        || CGAL::squared_distance(b, vb->point()) > r * r) 
+      return false;
+    return components[va->info()] == components[vb->info()];
   }
-  build_adj(adj, window, r);
-  return !can_color(n, adj);
-}
+  
+private:
+  Delaunay t;
+  long r;
+  bool has_interference;
+  vector<int> components;
+};
 
 int main() {
   ios_base::sync_with_stdio(false);
@@ -77,53 +80,24 @@ int main() {
   int t;
   cin >> t;
   while (t--) {
-    int n, m;
-    double r;
+    long n, m, r;
     cin >> n >> m >> r;
+
     vector<IPoint> stations;
     stations.reserve(n);
     for (int i = 0; i < n; ++i) {
-      int x, y;
+      long x, y;
       cin >> x >> y;
-      stations.emplace_back(Point{x, y}, i);
+      stations.emplace_back(Point(x, y), i);
     }
-    bool interferences = has_interferences(n, stations, r);
-
-    Triangulation t(stations.begin(), stations.end());
-    boost::disjoint_sets_with_storage<> uf(n);
-    for (auto e = t.finite_edges_begin(); e != t.finite_edges_end(); ++e) {
-      Index i1 = e->first->vertex((e->second + 1) % 3)->info();
-      Index i2 = e->first->vertex((e->second + 2) % 3)->info();
-      double dist = t.segment(e).squared_length();
-      if (dist <= r * r) {
-        Index c1 = uf.find_set(i1), c2 = uf.find_set(i2);
-        uf.link(c1, c2);
-      }
-    }
-
+    
+    Network network(n, m, r, stations);
     for (int i = 0; i < m; ++i) {
-      int ax, ay, bx, by;
+      long ax, ay, bx, by;
       cin >> ax >> ay >> bx >> by;
-      if (interferences) {
-        cout << 'n';
-        continue;
-      }
       Point a(ax, ay), b(bx, by);
-      long dist_ab = CGAL::squared_distance(a, b);
-      if (dist_ab <= r * r) {
-        // other radio set is in range
-        cout << 'y';
-        continue;
-      }
-      auto sa = t.nearest_vertex(a), sb = t.nearest_vertex(b);
-      long da = CGAL::squared_distance(a, sa->point());
-      long db = CGAL::squared_distance(b, sb->point());
-      if (da <= r * r && db <= r * r &&
-          (uf.find_set(sa->info()) == uf.find_set(sb->info()))) {
-        cout << 'y';
-        continue;
-      }
-      cout << 'n';
+      if (network.can_route(a, b)) cout << 'y';
+      else cout << 'n';
     }
     cout << '\n';
   }
