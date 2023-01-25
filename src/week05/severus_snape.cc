@@ -2,68 +2,76 @@
 
 using namespace std;
 
-using ll = long long;
+struct Potion {
+  long p, h;
+};
 
-vector<vector<vector<ll>>> compute_dp(int H, vector<pair<ll, ll>> &potions) {
-  const int m = potions.size();
+vector<long> compute_dp(int n, int H, vector<Potion> &potions) {
   // dp[k][h][i]: max power we can get
   //                - using exactly k items
-  //                - having happy >= h
+  //                - having happyness >= h
   //                - using potions in the range [..i]
-  vector<vector<vector<ll>>> dp(m + 1,
-                                vector<vector<ll>>(H + 1, vector<ll>(m + 1)));
-  for (int k = 1; k <= m; ++k) {
+  vector<vector<vector<long>>> dp(
+      n + 1, vector<vector<long>>(H + 1, vector<long>(n + 1)));
+  for (int k = 1; k <= n; ++k) {
     for (int h = 0; h <= H; ++h) {
-      for (int i = 0; i < m; ++i) {
-        ll power, happy;
-        const auto &potion = potions[i];
-        tie(power, happy) = potion;
-        ll no_take = dp[k][h][i];
-        ll take = dp[k - 1][max(h - happy, (ll)0)][i];
-        if (take > 0 || max(h - happy, (ll)0) == 0)
-          take += power; // can we actually take it?
-        dp[k][h][i + 1] = max(no_take, take);
+      for (int i = 1; i <= n; ++i) {
+        const auto &p = potions[i - 1];
+        long no_take = dp[k][h][i - 1];
+        long take = dp[k - 1][max(h - p.h, 0l)][i - 1];
+        if (take > 0 || p.h >= h)
+          take += p.p;
+        dp[k][h][i] = max(no_take, take);
       }
     }
   }
-  return dp;
+  vector<long> ans(n + 1);
+  for (int k = 0; k <= n; ++k) {
+    ans[k] = dp[k][H][n];
+  }
+  return ans;
+}
+
+int solve(int n, int m, long a, long b, long P, long H, long W,
+          vector<Potion> &potions_a, vector<long> &potions_b) {
+  vector<long> dp_a = compute_dp(n, H, potions_a);
+
+  sort(potions_b.rbegin(), potions_b.rend());
+  vector<long> dp_b(m + 1);
+  for (int i = 0; i < m; ++i) {
+    dp_b[i + 1] = dp_b[i] + potions_b[i];
+  }
+
+  int ans = INT_MAX;
+  for (int sa = 0; sa <= n; ++sa) {
+    for (int sb = 0; sb <= m; ++sb) {
+      long Px = dp_a[sa] - sb * b;
+      long Wx = dp_b[sb] - sa * a;
+      if (Px >= P && Wx >= W) {
+        ans = min(ans, sb + sa);
+      }
+    }
+  }
+  return ans == INT_MAX ? -1 : ans;
 }
 
 int main() {
   int t;
   cin >> t;
   while (t--) {
-    ll n, m, a, b, P, H, W;
+    long n, m, a, b, P, H, W;
     cin >> n >> m >> a >> b >> P >> H >> W;
-    vector<pair<ll, ll>> potion_a;
-    potion_a.reserve(n);
+    vector<Potion> potions_a;
+    potions_a.reserve(n);
     for (int i = 0; i < n; ++i) {
-      ll p, h;
+      long p, h;
       cin >> p >> h;
-      potion_a.emplace_back(p, h);
+      potions_a.push_back({p, h});
     }
-    vector<vector<vector<ll>>> dp = compute_dp(H, potion_a);
-    vector<ll> potion_b(m);
+    vector<long> potions_b(m);
     for (int i = 0; i < m; ++i) {
-      cin >> potion_b[i];
+      cin >> potions_b[i];
     }
-    sort(potion_b.rbegin(), potion_b.rend());
-    int ans = INT_MAX;
-    for (int sb = 0; sb <= m; ++sb) {
-      ll power = 0, happy = 0, wit = 0;
-      for (int i = 0; i < sb; ++i) {
-        wit += potion_b[i];
-      }
-      int j = 0;
-      while (j < n && (power < (P + sb * b) || happy < H)) {
-        power = dp[j + 1][H][n];
-        happy = H;
-        ++j;
-      }
-      if (power >= (P + sb * b) && happy >= H && wit >= W + j * a) {
-        ans = min(ans, sb + j);
-      }
-    }
-    cout << (ans == INT_MAX ? -1 : ans) << "\n";
+    cout << solve(n, m, a, b, P, H, W, potions_a, potions_b) << '\n';
   }
 }

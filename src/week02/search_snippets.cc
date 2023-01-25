@@ -2,24 +2,23 @@
 
 using namespace std;
 
-struct IWord {
-  int index, word;
+struct Word {
+  int id, pos;
 };
 
-long solve(int n, vector<IWord> &words) {
-  vector<int> counts(n);
-  int i = 0, j = 0, rem = n;
-  long ans = INT_MAX;
-  for (; i < (int)words.size(); ++i) {
-    rem -= counts[words[i].word] == 0;
-    ++counts[words[i].word];
-    while (rem == 0 && j < i && counts[words[j].word] > 1) {
-      --counts[words[j].word];
-      j++;
+int solve(int n, int m, vector<Word> &words) {
+  vector<int> cnts(n);
+  int j = 0, rem = n, ans = INT_MAX;
+  for (int i = 0; i < m; ++i) {
+    if (++cnts[words[i].id] == 1) {
+      --rem;
     }
-    long span = (long)words[i].index - words[j].index + 1;
-    if (rem == 0 && span < ans) {
-      ans = span;
+    while (j < i && cnts[words[j].id] > 1) {
+      --cnts[words[j].id];
+      ++j;
+    }
+    if (rem == 0) {
+      ans = min(ans, words[i].pos - words[j].pos + 1);
     }
   }
   return ans;
@@ -34,22 +33,22 @@ int main() {
     int n;
     cin >> n;
     vector<int> m(n);
-    int total_words = 0;
+    int num_words = 0;
     for (int i = 0; i < n; ++i) {
       cin >> m[i];
-      total_words += m[i];
+      num_words += m[i];
     }
-    vector<IWord> words;
-    words.reserve(total_words);
+    vector<Word> words;
+    words.reserve(num_words);
     for (int i = 0; i < n; ++i) {
-      for (int pi = 0; pi < m[i]; ++pi) {
-        int index;
-        cin >> index;
-        words.push_back({index, i});
+      for (int j = 0; j < m[i]; ++j) {
+        int position;
+        cin >> position;
+        words.push_back({i, position});
       }
     }
     sort(words.begin(), words.end(),
-         [](const auto &a, const auto &b) { return a.index < b.index; });
-    cout << solve(n, words) << '\n';
+         [](const auto &w1, const auto &w2) { return w1.pos < w2.pos; });
+    cout << solve(n, num_words, words) << '\n';
   }
 }
