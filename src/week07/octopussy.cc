@@ -2,53 +2,46 @@
 
 using namespace std;
 
-bool recsolve(int index, vector<int> &B, vector<bool> &deactivate,
-              vector<int> &pi) {
-  const int n = deactivate.size();
-  if (index >= n)
-    return true;
-  if (deactivate[index])
-    return true;
-  bool ok = true;
-  ok = ok && recsolve(index * 2 + 1, B, deactivate, pi);
-  ok = ok && recsolve(index * 2 + 2, B, deactivate, pi);
-  int bi = B[index];
-  ok = ok && (bi > (int)pi.size());
-  pi.push_back(index);
-  deactivate[index] = true;
-  return ok;
+int dfs(int n, vector<bool> &alive, int index) {
+  if (index >= n || !alive[index])
+    return 0;
+  alive[index] = false;
+  return 1 + dfs(n, alive, 2 * index + 1) + dfs(n, alive, 2 * index + 2);
+}
+
+bool solve(int n, vector<int> &t) {
+  priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+  for (int i = 0; i < n; ++i) {
+    pq.push({t[i], i});
+  }
+  vector<bool> alive(n, true);
+  int curr = 0;
+  while (pq.size()) {
+    int tm, index;
+    tie(tm, index) = pq.top();
+    pq.pop();
+    if (!alive[index])
+      continue;
+    curr += dfs(n, alive, index);
+    if (curr > tm)
+      return false;
+  }
+  return true;
 }
 
 int main() {
   ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
   int t;
   cin >> t;
   while (t--) {
     int n;
     cin >> n;
-    vector<int> B(n);
+    vector<int> t(n);
     for (int i = 0; i < n; ++i) {
-      cin >> B[i];
+      cin >> t[i];
     }
-    vector<bool> deactivate(n);
-    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
-    for (int i = 0; i < n; ++i) {
-      pq.push({B[i], i});
-    }
-    vector<int> pi;
-    pi.reserve(n);
-    bool ok = true;
-    while (pq.size()) {
-      int index = pq.top().second;
-      pq.pop();
-      if (deactivate[index])
-        continue;
-      if (!recsolve(index, B, deactivate, pi)) {
-        ok = false;
-        break;
-      }
-    }
-    if (ok)
+    if (solve(n, t))
       cout << "yes\n";
     else
       cout << "no\n";

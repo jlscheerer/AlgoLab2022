@@ -3,11 +3,11 @@
 using namespace std;
 
 int solve(int n, vector<int> &h) {
-  int ans = 0, bound = 1;
-  for (int i = 0; i < n; ++i) {
-    if (bound > i) {
+  int back = h[0], ans = 1;
+  for (int i = 1; i < n; ++i) {
+    if (i < back) {
+      back = max(back, i + h[i]);
       ++ans;
-      bound = max(bound, i + h[i]);
     }
   }
   return ans;

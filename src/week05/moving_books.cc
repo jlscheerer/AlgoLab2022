@@ -1,52 +1,57 @@
 #include <bits/stdc++.h>
 
 using namespace std;
-constexpr int mxN = 1e6;
+
+int solve(int n, int m, vector<int> &s, vector<int> &w) {
+  sort(s.rbegin(), s.rend());
+  sort(w.rbegin(), w.rend());
+  if (s.front() < w.front())
+    return -1;
+
+  const auto can = [&](const int k) {
+    if (k == 0 || (m + k - 1) / k > n)
+      return false;
+    for (int j = 0; j < m; ++j) {
+      if (s[j / k] < w[j])
+        return false;
+    }
+    return true;
+  };
+
+  int left = 1, right = m, ans = -1;
+  while (left <= right) {
+    int mid = left + (right - left) / 2;
+    if (can(mid)) {
+      right = mid - 1;
+      ans = mid;
+    } else {
+      left = mid + 1;
+    }
+  }
+
+  return 3 * ans - 1;
+}
 
 int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
   int t;
   cin >> t;
   while (t--) {
     int n, m;
     cin >> n >> m;
-    vector<int> s(n), w(m);
+    vector<int> s(n);
     for (int i = 0; i < n; ++i) {
       cin >> s[i];
     }
-    sort(s.begin(), s.end());
+    vector<int> w(m);
     for (int i = 0; i < m; ++i) {
       cin >> w[i];
     }
-    sort(w.begin(), w.end());
-    if (w[m - 1] > s[n - 1]) {
+    int ans = solve(n, m, s, w);
+    if (ans == -1)
       cout << "impossible\n";
-      continue;
-    }
-    vector<int> workload(n);
-    int j = 0, prev = 0;
-    for (int i = 0; i < n; ++i) {
-      while (j < m && s[i] >= w[j])
-        ++j;
-      workload[i] = j - prev, prev = j;
-      if (j >= m)
-        break;
-    }
-    int left = 0, right = mxN;
-    int ans = 0;
-    while (left <= right) {
-      int mid = (left + right + 1) / 2;
-      int overflow = 0;
-      for (int i = 0; i < n; ++i) {
-        int actual = workload[i] + overflow;
-        overflow = max(actual - mid, 0);
-      }
-      if (overflow == 0) {
-        ans = mid;
-        right = mid - 1;
-      } else {
-        left = mid + 1;
-      }
-    }
-    cout << (ans - 1) * 3 + 2 << endl;
+    else
+      cout << ans << '\n';
   }
 }

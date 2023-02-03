@@ -2,27 +2,21 @@
 
 using namespace std;
 
-// BGL include
 #include <boost/graph/adjacency_list.hpp>
-
-// BGL flow include *NEW*
 #include <boost/graph/push_relabel_max_flow.hpp>
 
-// Graph Type with nested interior edge properties for flow algorithms
-typedef boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS>
-    traits;
-typedef boost::adjacency_list<
+using traits =
+    boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS>;
+using graph = boost::adjacency_list<
     boost::vecS, boost::vecS, boost::directedS, boost::no_property,
     boost::property<boost::edge_capacity_t, long,
                     boost::property<boost::edge_residual_capacity_t, long,
                                     boost::property<boost::edge_reverse_t,
-                                                    traits::edge_descriptor>>>>
-    graph;
+                                                    traits::edge_descriptor>>>>;
 
-typedef traits::vertex_descriptor vertex_desc;
-typedef traits::edge_descriptor edge_desc;
+using vertex_desc = traits::vertex_descriptor;
+using edge_desc = traits::edge_descriptor;
 
-// Custom edge adder class, highly recommended
 class edge_adder {
   graph &G;
 
@@ -41,80 +35,63 @@ public:
   }
 };
 
-// find all "relevant" edges (i.e., edges contained in a minimum path from s to
-// f)
-vector<pair<int, int>>
-dijkstra(int n, int s, int f, unordered_map<int, vector<pair<int, int>>> &adj) {
-  vector<int> dist(n, INT_MAX);
-  vector<vector<int>> pred(n);
+vector<pair<int, int>> dijkstra(int n, int s, int f,
+                                vector<unordered_map<int, int>> &ds) {
+  vector<int> dist(n, INT_MAX / 2);
+  vector<set<int>> pred(n);
   priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
-  dist[s] = 0;
   pq.push({0, s});
+  dist[s] = 0;
+
   while (pq.size()) {
     int d, u;
     tie(d, u) = pq.top();
     pq.pop();
-    if (dist[u] < d)
+    if (d > dist[u])
       continue;
-    for (const auto &v_d2 : adj[u]) {
-      int v, d2;
-      tie(v, d2) = v_d2;
-      if (dist[v] > d + d2) {
+    for (const auto &v_d2 : ds[u]) {
+      const int v = v_d2.first, d2 = v_d2.second;
+      if (dist[v] == d + d2) {
+        pred[v].insert(u);
+      } else if (dist[v] > d + d2) {
         dist[v] = d + d2;
-        pred[v].clear();
-        pred[v].push_back(u);
         pq.push({d + d2, v});
-      } else if (dist[v] == d + d2) {
-        pred[v].push_back(u);
+        pred[v].clear();
+        pred[v].insert(u);
       }
     }
   }
-  vector<pair<int, int>> edges;
+
+  deque<int> q;
+  q.push_back(f);
+  vector<pair<int, int>> ans;
   set<int> seen;
-  deque<int> q{f};
   while (q.size()) {
     int v = q.front();
     q.pop_front();
-    if (seen.find(v) != seen.end())
+    if (seen.count(v))
       continue;
     seen.insert(v);
     for (int u : pred[v]) {
-      edges.emplace_back(u, v);
       q.push_back(u);
+      ans.push_back({u, v});
     }
   }
-  return edges;
+  return ans;
 }
 
-long solve(int n, int m, int s, int f,
-           unordered_map<int, unordered_map<int, pair<int, int>>> &dist) {
-  unordered_map<int, vector<pair<int, int>>> adj;
-  for (const auto &u_vs : dist) {
-    const int u = u_vs.first;
-    for (const auto &v_edg : u_vs.second) {
-      int v = v_edg.first, w, l;
-      tie(w, l) = v_edg.second;
-      adj[u].emplace_back(v, l);
-      adj[v].emplace_back(u, l);
-    }
-  }
-  // find all "relevant" edges (i.e., edges contained in a minimum path from s
-  // to f)
-  vector<pair<int, int>> relevant_edges = dijkstra(n, s, f, adj);
-  // now compute the maximum flow from s to f using only these edges...
+long solve(int n, int m, int s, int f, vector<unordered_map<int, int>> &cs,
+           vector<unordered_map<int, int>> &ds) {
+  vector<pair<int, int>> adj = dijkstra(n, s, f, ds);
   graph G(n);
   edge_adder edges(G);
-  const int v_source = s, v_sink = f;
-
-  for (const auto &edge : relevant_edges) {
-    int u, v, w, l;
+  for (const auto &edge : adj) {
+    int u, v;
     tie(u, v) = edge;
-    int x = min(u, v), y = max(u, v);
-    tie(w, l) = dist[x][y];
-    edges.add_edge(u, v, w);
+    int c = cs[u][v];
+    edges.add_edge(u, v, c);
   }
-
-  return boost::push_relabel_max_flow(G, v_source, v_sink);
+  return boost::push_relabel_max_flow(G, s, f);
 }
 
 int main() {
@@ -125,25 +102,19 @@ int main() {
   while (t--) {
     int n, m, s, f;
     cin >> n >> m >> s >> f;
-    unordered_map<int, unordered_map<int, pair<int, int>>> dist;
+    vector<unordered_map<int, int>> cs(n), ds(n);
     for (int i = 0; i < m; ++i) {
-      int a, b, w, l;
-      cin >> a >> b >> w >> l;
-      if (a == b)
-        continue; // useless street (will never be in the shortest path!)
-      int x = min(a, b), y = max(a, b);
-      if (dist[x].find(y) == dist[x].end()) {
-        dist[x][y] = {w, l};
-      } else {
-        int wp, lp;
-        tie(wp, lp) = dist[x][y];
-        if (l == lp) { // same distance => increases the width
-          dist[x][y] = {w + wp, l};
-        } else if (l < lp) { // shortest distance => replace prev.
-          dist[x][y] = {w, l};
-        } // otherwise: useless street (will never be in the shortest path!)
+      int a, b, c, d;
+      cin >> a >> b >> c >> d;
+      if (a > b)
+        swap(a, b);
+      if (cs[a].find(b) == cs[a].end() || ds[a][b] > d) {
+        cs[a][b] = cs[b][a] = c;
+        ds[a][b] = ds[b][a] = d;
+      } else if (ds[a][b] == d) {
+        cs[a][b] += c, cs[b][a] += c;
       }
     }
-    cout << solve(n, m, s, f, dist) << '\n';
+    cout << solve(n, m, s, f, cs, ds) << '\n';
   }
 }
