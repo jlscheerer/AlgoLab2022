@@ -25,16 +25,8 @@ int main() {
     // compute min/max distance to "target"
     for (const auto edge : edges) {
       int i = edge.first, j = edge.second;
-      if (mind[i] == -1) {
-        mind[i] = maxd[j];
-      }
-      if (maxd[j] != -1)
-        mind[i] = min(mind[i], maxd[j] + 1);
-      if (maxd[i] == -1) {
-        maxd[i] = mind[j];
-      }
-      if (mind[j] != -1)
-        maxd[i] = max(maxd[i], mind[j] + 1);
+      mind[i] = min(mind[i], maxd[j] + 1);
+      maxd[i] = max(maxd[i], mind[j] + 1);
     }
     int holmes = mind[r - 1], moriarty = mind[b - 1];
 
